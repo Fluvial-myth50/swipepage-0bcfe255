@@ -22,7 +22,7 @@ function Feed() {
   const [buying, setBuying] = useState<Book | null>(null);
   const [dwell, setDwell] = useState(0);
   const start = useRef(Date.now());
-  const book = books[Math.min(idx, books.length - 1)];
+  const book = books[Math.min(idx, books.length - 1)]!;
 
   // reset to newest card when a book is published
   const count = useRef(books.length);
@@ -60,10 +60,10 @@ function Feed() {
     <main className="flex min-h-screen items-center justify-center px-3 pt-16 pb-4">
       <div
         className="relative h-[min(82vh,760px)] w-full max-w-[420px] overflow-hidden rounded-[2rem] border bg-card shadow-2xl"
-        onTouchStart={(e) => (touchY.current = e.touches[0].clientY)}
+        onTouchStart={(e) => (touchY.current = e.touches[0]!.clientY)}
         onTouchEnd={(e) => {
           if (touchY.current == null) return;
-          const d = touchY.current - e.changedTouches[0].clientY;
+          const d = touchY.current - e.changedTouches[0]!.clientY;
           if (Math.abs(d) > 50) go(d > 0 ? 1 : -1);
           touchY.current = null;
         }}
