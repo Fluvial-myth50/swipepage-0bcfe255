@@ -114,7 +114,7 @@ function NavBtn({ label, onClick, disabled }: { label: string; onClick: () => vo
   );
 }
 
-function Card({ book, onRead, rec, topPick }: { book: Book; onRead: () => void; rec?: Rec; topPick: boolean }) {
+function Card({ book, onRead, rec, topPick }: { book: Book; onRead: () => void; rec: Rec | undefined; topPick: boolean }) {
   return (
     <article className="animate-card-in absolute inset-0 flex flex-col"
       style={{ background: `radial-gradient(120% 80% at 20% 0%, oklch(0.45 0.14 ${book.hue} / 0.55), transparent 60%), radial-gradient(90% 60% at 100% 100%, oklch(0.4 0.12 ${book.hue + 60} / 0.4), transparent 70%)` }}>

@@ -23,18 +23,18 @@ const events: Event[] = [
 describe("reco", () => {
   it("ranks the book with strong signals far above the ignored one", () => {
     const { recs } = computeReco(books, events);
-    expect(recs.b1!.score).toBeGreaterThan(65);
-    expect(recs.b1!.tier).toBe("hot");
-    expect(recs.b2!.score).toBeLessThan(10);
-    expect(recs.b2!.tier).toBe("cold");
-    expect(recs.b1!.score).toBeGreaterThan(recs.b2!.score);
+    expect(recs["b1"]!.score).toBeGreaterThan(65);
+    expect(recs["b1"]!.tier).toBe("hot");
+    expect(recs["b2"]!.score).toBeLessThan(10);
+    expect(recs["b2"]!.tier).toBe("cold");
+    expect(recs["b1"]!.score).toBeGreaterThan(recs["b2"]!.score);
   });
 
   it("explains the top pick with dwell, pull and ownership reasons", () => {
     const { recs } = computeReco(books, events);
-    expect(recs.b1!.reasons[0]).toContain("50s");
-    expect(recs.b1!.reasons.join(" | ")).toContain("Deluxe");
-    expect(recs.b1!.reasons.length).toBeGreaterThan(2);
+    expect(recs["b1"]!.reasons[0]).toContain("50s");
+    expect(recs["b1"]!.reasons.join(" | ")).toContain("Deluxe");
+    expect(recs["b1"]!.reasons.length).toBeGreaterThan(2);
   });
 
   it("gives Horror most of the taste share (100s of 120s dwell)", () => {
@@ -46,7 +46,7 @@ describe("reco", () => {
   it("stays neutral on a cold start", () => {
     const { recs, signals } = computeReco(books, []);
     expect(signals).toBe(0);
-    expect(recs.b1!.score).toBe(recs.b2!.score);
-    expect(recs.b1!.reasons[0]).toContain("still learning");
+    expect(recs["b1"]!.score).toBe(recs["b2"]!.score);
+    expect(recs["b1"]!.reasons[0]).toContain("still learning");
   });
 });
