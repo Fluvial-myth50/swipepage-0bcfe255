@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { actions, useStore, type Book } from "@/lib/store";
+import { computeReco, type Rec } from "@/lib/reco";
 import { CheckoutModal } from "@/components/CheckoutModal";
 
 export const Route = createFileRoute("/")({
@@ -17,12 +18,21 @@ export const Route = createFileRoute("/")({
 
 function Feed() {
   const books = useStore((s) => s.books);
+  const events = useStore((s) => s.events);
   const [idx, setIdx] = useState(0);
   const [reading, setReading] = useState<Book | null>(null);
   const [buying, setBuying] = useState<Book | null>(null);
   const [dwell, setDwell] = useState(0);
   const start = useRef(Date.now());
   const book = books[Math.min(idx, books.length - 1)]!;
+
+  // Recommendation model: ranks every card from logged dwell, swipes,
+  // purchases and bookmarks; the top-scoring card gets flagged.
+  const reco = useMemo(() => computeReco(books, events), [books, events]);
+  const topId = useMemo(() => {
+    if (reco.signals < 3) return null;
+    return books.reduce((best, b) => (reco.recs[b.id]!.score > reco.recs[best]!.score ? b.id : best), books[0]?.id ?? "");
+  }, [books, reco]);
 
   // reset to newest card when a book is published
   const count = useRef(books.length);
@@ -73,7 +83,7 @@ function Feed() {
           go(e.deltaY > 0 ? 1 : -1);
         }}
       >
-        <Card key={book.id} book={book} onRead={() => setReading(book)} />
+        <Card key={book.id} book={book} onRead={() => setReading(book)} rec={reco.recs[book.id]} topPick={book.id === topId} />
 
         <div className="absolute right-3 top-1/2 z-10 flex -translate-y-1/2 flex-col gap-1.5">
           {books.map((b, i) => (
@@ -104,11 +114,16 @@ function NavBtn({ label, onClick, disabled }: { label: string; onClick: () => vo
   );
 }
 
-function Card({ book, onRead }: { book: Book; onRead: () => void }) {
+function Card({ book, onRead, rec, topPick }: { book: Book; onRead: () => void; rec: Rec | undefined; topPick: boolean }) {
   return (
     <article className="animate-card-in absolute inset-0 flex flex-col"
       style={{ background: `radial-gradient(120% 80% at 20% 0%, oklch(0.45 0.14 ${book.hue} / 0.55), transparent 60%), radial-gradient(90% 60% at 100% 100%, oklch(0.4 0.12 ${book.hue + 60} / 0.4), transparent 70%)` }}>
       <div className="no-scrollbar flex-1 overflow-y-auto px-7 pt-14 pb-4">
+        {topPick && (
+          <span className="mb-3 inline-block rounded-full bg-primary px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-primary-foreground shadow-glow">
+            ★ Top pick for you
+          </span>
+        )}
         <p className="font-serif text-[1.15rem] leading-relaxed text-foreground/90">“{book.hook}”</p>
       </div>
       <div className="bg-gradient-card px-6 pt-10 pb-6">
@@ -117,6 +132,11 @@ function Card({ book, onRead }: { book: Book; onRead: () => void }) {
         <p className="mt-1 text-sm text-muted-foreground">
           {book.author} {book.verified && <span className="text-primary">✓ Verified</span>}
         </p>
+        {rec?.reasons[0] && (
+          <p className="mt-2 text-xs text-muted-foreground" title={`Match score ${rec.score}/100`}>
+            ↯ {rec.reasons[0]} <span className="font-mono opacity-60">· {rec.score}%</span>
+          </p>
+        )}
         <button onClick={onRead} className="mt-4 w-full rounded-full bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow transition-transform active:scale-95">
           Read Full Book
         </button>

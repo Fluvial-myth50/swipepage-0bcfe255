@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useStore } from "@/lib/store";
+import { computeReco } from "@/lib/reco";
 
 export const Route = createFileRoute("/analytics")({
   head: () => ({
@@ -39,10 +40,15 @@ function Analytics() {
     ["Platform fees (25%)", `$${platform.toFixed(2)}`],
   ];
 
+  const reco = computeReco(books, events);
+  const genres = Object.entries(reco.genreAffinity).sort((a, b) => b[1] - a[1]).filter(([, v]) => v > 0);
+
   return (
     <main className="mx-auto max-w-4xl px-5 pt-24 pb-16">
       <h1 className="text-4xl font-bold tracking-tight">Analytics</h1>
-      <p className="mt-2 text-muted-foreground">Every interaction from the feed, logged live.</p>
+      <p className="mt-2 text-muted-foreground">
+        Every interaction from the feed, logged live. {reco.signals < 3 ? "The model needs a few more signals before it predicts." : `The model has ${reco.signals} signals to learn from.`}
+      </p>
       <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3">
         {stats.map(([k, v]) => (
           <div key={k} className="rounded-2xl border bg-card p-4">
@@ -61,6 +67,20 @@ function Analytics() {
               <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${(avg / max) * 100}%` }} />
             </div>
             <span className="w-24 text-right font-mono text-xs text-muted-foreground">{avg.toFixed(1)}s · {views}×</span>
+          </div>
+        ))}
+      </div>
+
+      <h2 className="mt-10 text-sm font-semibold uppercase tracking-widest text-muted-foreground">Your taste profile — what the model predicts</h2>
+      <div className="mt-3 space-y-2">
+        {genres.length === 0 && <p className="text-sm text-muted-foreground">No reading time logged yet — swipe a few cards and this fills in.</p>}
+        {genres.map(([g, v]) => (
+          <div key={g} className="flex items-center gap-3 text-sm">
+            <span className="w-44 truncate">{g}</span>
+            <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+              <div className="h-full rounded-full bg-gradient-deluxe transition-all" style={{ width: `${v * 100}%` }} />
+            </div>
+            <span className="w-16 text-right font-mono text-xs text-muted-foreground">{Math.round(v * 100)}%</span>
           </div>
         ))}
       </div>
