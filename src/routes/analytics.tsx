@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useStore } from "@/lib/store";
 import { computeReco } from "@/lib/reco";
+import { adEarnings } from "@/lib/economy";
+import { useTicker } from "@/hooks/use-ticker";
 
 export const Route = createFileRoute("/analytics")({
   head: () => ({
@@ -31,6 +33,11 @@ function Analytics() {
   });
   const max = Math.max(1, ...perBook.map((p) => p.avg));
 
+  const impressions = events.filter((e) => e.type === "ad").length;
+  const adGross = adEarnings(dwells.reduce((a, e) => a + e.seconds, 0));
+  const tImp = useTicker(impressions);
+  const tGross = useTicker(adGross);
+
   const stats = [
     ["Swipes", events.filter((e) => e.type === "swipe").length],
     ["Avg dwell", `${avg.toFixed(1)}s`],
@@ -49,7 +56,17 @@ function Analytics() {
       <p className="mt-2 text-muted-foreground">
         Every interaction from the feed, logged live. {reco.signals < 3 ? "The model needs a few more signals before it predicts." : `The model has ${reco.signals} signals to learn from.`}
       </p>
-      <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3">
+      <div className="mt-8 grid gap-3 sm:grid-cols-2">
+        <div className="rounded-2xl border border-primary/30 bg-card p-5">
+          <div className="text-xs text-muted-foreground">Total Platform Ad Impressions</div>
+          <div className="mt-1 font-mono text-3xl font-bold tabular-nums">{Math.round(tImp).toLocaleString()}</div>
+        </div>
+        <div className="rounded-2xl border border-deluxe/30 bg-card p-5">
+          <div className="text-xs text-muted-foreground">Total Platform Gross Ad Revenue · £4.50 CPM</div>
+          <div className="mt-1 font-mono text-3xl font-bold tabular-nums text-deluxe">£{tGross.toFixed(6)}</div>
+        </div>
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
         {stats.map(([k, v]) => (
           <div key={k} className="rounded-2xl border bg-card p-4">
             <div className="text-xs text-muted-foreground">{k}</div>
@@ -95,6 +112,7 @@ function Analytics() {
             <span>
               {e.type === "dwell" && `${e.seconds}s`}
               {e.type === "swipe" && e.direction}
+              {e.type === "ad" && `${e.slot} impression`}
               {e.type === "purchase" && `${e.tier} $${e.price} → author $${e.author} / platform $${e.platform}`}
             </span>
             <span className="ml-4 text-muted-foreground">{new Date(e.at).toLocaleTimeString()}</span>

@@ -1,7 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { actions } from "@/lib/store";
-import { extractHook } from "@/lib/economy";
+import { actions, useStore } from "@/lib/store";
+import { extractHook, adEarnings, splitAd } from "@/lib/economy";
+import { useTicker } from "@/hooks/use-ticker";
 
 export const Route = createFileRoute("/author")({
   head: () => ({
@@ -19,6 +20,63 @@ const steps = ["Tokenizing manuscript", "Gemini scanning narrative tension", "Sc
 const input = "w-full rounded-xl border bg-muted px-4 py-3 text-sm outline-none focus:border-primary";
 
 function Author() {
+  const [tab, setTab] = useState<"publish" | "wallet">("publish");
+  return (
+    <main className="mx-auto max-w-2xl px-5 pt-24 pb-16">
+      <p className="text-xs uppercase tracking-[0.2em] text-primary">✓ Verified Author</p>
+      <h1 className="mt-2 text-4xl font-bold tracking-tight">Author Studio</h1>
+      <div className="mt-6 inline-flex rounded-full border bg-muted p-1 text-sm">
+        {([["publish", "Publish"], ["wallet", "Earnings & Wallet"]] as const).map(([k, l]) => (
+          <button key={k} onClick={() => setTab(k)} className={`rounded-full px-4 py-1.5 transition ${tab === k ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>{l}</button>
+        ))}
+      </div>
+      {tab === "publish" ? <Publish /> : <Wallet />}
+    </main>
+  );
+}
+
+function Wallet() {
+  const books = useStore((s) => s.books);
+  const events = useStore((s) => s.events);
+  const authors = [...new Set(books.map((b) => b.author))];
+  const [me, setMe] = useState(authors[0] ?? "");
+  const mine = books.filter((b) => b.author === me);
+  const rows = mine.map((b) => {
+    const secs = events.reduce((a, e) => a + (e.type === "dwell" && e.bookId === b.id ? e.seconds : 0), 0);
+    return { b, secs, gross: adEarnings(secs) };
+  });
+  const gross = rows.reduce((a, r) => a + r.gross, 0);
+  const { author, platform } = splitAd(gross);
+  const tA = useTicker(author), tP = useTicker(platform);
+  return (
+    <section className="mt-6">
+      <select className={input} value={me} onChange={(e) => setMe(e.target.value)}>
+        {authors.map((a) => <option key={a}>{a}</option>)}
+      </select>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <div className="rounded-2xl border border-primary/40 bg-card p-5">
+          <div className="text-xs text-muted-foreground">Your Available Balance (75%)</div>
+          <div className="mt-1 font-mono text-3xl font-bold tabular-nums text-primary">£{tA.toFixed(6)}</div>
+        </div>
+        <div className="rounded-2xl border bg-card p-5">
+          <div className="text-xs text-muted-foreground">SwipePage System Fee (25%)</div>
+          <div className="mt-1 font-mono text-3xl font-bold tabular-nums">£{tP.toFixed(6)}</div>
+        </div>
+      </div>
+      <div className="mt-4 overflow-hidden rounded-2xl border">
+        {rows.map(({ b, secs, gross }) => (
+          <div key={b.id} className="flex justify-between border-b px-4 py-2.5 font-mono text-xs last:border-0">
+            <span className="truncate font-sans">{b.title}</span>
+            <span className="text-muted-foreground">{secs.toFixed(1)}s · £{gross.toFixed(6)}</span>
+          </div>
+        ))}
+      </div>
+      <p className="mt-3 text-xs text-muted-foreground">Ad earnings = (dwell seconds / 1000) × (£4.50 / 60), from reader time on your cards.</p>
+    </section>
+  );
+}
+
+function Publish() {
   const nav = useNavigate();
   const [f, setF] = useState({ title: "", author: "", genre: "Thriller", price: "7.99", text: "" });
   const [stage, setStage] = useState(-1);
@@ -37,10 +95,8 @@ function Author() {
   };
 
   return (
-    <main className="mx-auto max-w-2xl px-5 pt-24 pb-16">
-      <p className="text-xs uppercase tracking-[0.2em] text-primary">✓ Verified Author</p>
-      <h1 className="mt-2 text-4xl font-bold tracking-tight">Author Studio</h1>
-      <p className="mt-2 text-muted-foreground">Drop a manuscript. We'll find the passage that makes readers stop scrolling. You keep 75%.</p>
+    <div>
+      <p className="mt-4 text-muted-foreground">Drop a manuscript. We'll find the passage that makes readers stop scrolling. You keep 75%.</p>
 
       <div className="mt-8 grid gap-3 sm:grid-cols-2">
         <input className={input} placeholder="Book title" value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} />
@@ -84,6 +140,6 @@ function Author() {
           </div>
         </div>
       )}
-    </main>
+    </div>
   );
 }

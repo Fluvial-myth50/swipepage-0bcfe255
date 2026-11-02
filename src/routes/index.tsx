@@ -3,6 +3,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { actions, useStore, type Book } from "@/lib/store";
 import { computeReco, type Rec } from "@/lib/reco";
 import { CheckoutModal } from "@/components/CheckoutModal";
+import { AdSlot } from "@/components/AdSlot";
+import { AD_EVERY } from "@/lib/economy";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -23,8 +25,11 @@ function Feed() {
   const [reading, setReading] = useState<Book | null>(null);
   const [buying, setBuying] = useState<Book | null>(null);
   const [dwell, setDwell] = useState(0);
+  const [order, setOrder] = useState<string[]>(() => books.map((b) => b.id));
+  const [swipes, setSwipes] = useState(0);
+  const [showAd, setShowAd] = useState(false);
   const start = useRef(Date.now());
-  const book = books[Math.min(idx, books.length - 1)]!;
+  const book = books.find((b) => b.id === order[Math.min(idx, order.length - 1)]) ?? books[0]!;
 
   // Recommendation model: ranks every card from logged dwell, swipes,
   // purchases and bookmarks; the top-scoring card gets flagged.
@@ -36,7 +41,14 @@ function Feed() {
 
   // reset to newest card when a book is published
   const count = useRef(books.length);
-  useEffect(() => { if (books.length > count.current) setIdx(0); count.current = books.length; }, [books.length]);
+  useEffect(() => {
+    if (books.length > count.current) {
+      const fresh = books.filter((b) => !order.includes(b.id)).map((b) => b.id);
+      setOrder([...fresh, ...order]);
+      setIdx(0);
+    }
+    count.current = books.length;
+  }, [books.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // invisible dwell timer
   useEffect(() => {
@@ -44,14 +56,25 @@ function Feed() {
     setDwell(0);
     const t = setInterval(() => setDwell((Date.now() - start.current) / 1000), 100);
     return () => clearInterval(t);
-  }, [book?.id]);
+  }, [book?.id, showAd]);
 
   const go = (dir: 1 | -1) => {
+    if (reading) return;
+    if (showAd) { setShowAd(false); return; }
     const next = idx + dir;
-    if (next < 0 || next >= books.length || reading) return;
+    if (next < 0 || next >= order.length) return;
     const seconds = Math.round((Date.now() - start.current) / 100) / 10;
     actions.log({ type: "dwell", bookId: book.id, seconds, at: Date.now() });
     actions.log({ type: "swipe", bookId: book.id, direction: dir > 0 ? "next" : "prev", at: Date.now() });
+    if (dir > 0) {
+      // Personalised queue: everything not yet seen is re-ranked by the model.
+      const seen = order.slice(0, next);
+      const rest = order.slice(next).sort((a, b) => (reco.recs[b]?.score ?? 0) - (reco.recs[a]?.score ?? 0));
+      setOrder([...seen, ...rest]);
+      const n = swipes + 1;
+      setSwipes(n);
+      if (n % AD_EVERY === 0) setShowAd(true);
+    }
     setIdx(next);
   };
 
@@ -83,16 +106,21 @@ function Feed() {
           go(e.deltaY > 0 ? 1 : -1);
         }}
       >
-        <Card key={book.id} book={book} onRead={() => setReading(book)} rec={reco.recs[book.id]} topPick={book.id === topId} />
+        {showAd ? (
+          <div className="animate-card-in absolute inset-0 flex flex-col items-center justify-center gap-4 bg-card px-6">
+            <AdSlot size="rectangle" bookId={book.id} slot="feed" key={swipes} />
+            <p className="text-xs text-muted-foreground">Swipe to keep reading ↓</p>
+          </div>
+        ) : <Card key={book.id} book={book} onRead={() => setReading(book)} rec={reco.recs[book.id]} topPick={book.id === topId} />}
 
         <div className="absolute right-3 top-1/2 z-10 flex -translate-y-1/2 flex-col gap-1.5">
-          {books.map((b, i) => (
-            <span key={b.id} className={`w-1 rounded-full transition-all ${i === idx ? "h-6 bg-primary" : "h-1.5 bg-foreground/25"}`} />
+          {order.map((id, i) => (
+            <span key={id} className={`w-1 rounded-full transition-all ${i === idx ? "h-6 bg-primary" : "h-1.5 bg-foreground/25"}`} />
           ))}
         </div>
         <div className="absolute right-4 bottom-36 z-10 flex flex-col gap-2">
           <NavBtn label="↑" disabled={idx === 0} onClick={() => go(-1)} />
-          <NavBtn label="↓" disabled={idx === books.length - 1} onClick={() => go(1)} />
+          <NavBtn label="↓" disabled={idx === order.length - 1 && !showAd} onClick={() => go(1)} />
         </div>
         <div className="absolute left-4 top-4 z-10 rounded-full bg-background/50 px-2.5 py-1 font-mono text-[10px] text-muted-foreground backdrop-blur" title="Dwell time (debug)">
           ⏱ {dwell.toFixed(1)}s
@@ -161,7 +189,17 @@ function Reader({ book, onClose, onBuy }: { book: Book; onClose: () => void; onB
         <h1 className="font-serif text-3xl">{book.title}</h1>
         <p className="mt-1 text-sm text-muted-foreground">by {book.author}</p>
         <div className="mt-8 space-y-5 font-serif text-[1.08rem] leading-[1.8]">
-          {book.body.split(/\n\s*\n/).map((p, i) => <p key={i}>{p}</p>)}
+          {book.body.split(/\n\s*\n/).map((p, i) => (
+            <div key={i} className="space-y-5">
+              {i > 0 && i % 2 === 0 && (
+                <div className="py-4">
+                  <p className="mb-3 text-center text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Chapter {i / 2 + 1}</p>
+                  <AdSlot size="leaderboard" bookId={book.id} slot="reader" />
+                </div>
+              )}
+              <p>{p}</p>
+            </div>
+          ))}
         </div>
         {owned === "deluxe" && <p className="mt-8 rounded-xl border border-deluxe/40 p-4 text-sm italic text-deluxe">Author commentary: “This opening came to me on a night train. I wrote it on the back of a ticket.”</p>}
       </div>
