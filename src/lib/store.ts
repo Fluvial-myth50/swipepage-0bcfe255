@@ -10,7 +10,8 @@ export type Event =
   | { type: "swipe"; bookId: string; direction: "next" | "prev"; at: number }
   | { type: "purchase"; bookId: string; tier: "standard" | "deluxe"; price: number; author: number; platform: number; at: number }
   | { type: "bookmark"; bookId: string; at: number }
-  | { type: "publish"; bookId: string; at: number };
+  | { type: "publish"; bookId: string; at: number }
+  | { type: "ad"; bookId: string; slot: "feed" | "reader"; at: number };
 
 const lorem = (seed: string) =>
   Array.from({ length: 6 }, (_, i) => `${seed} ${["The corridor hummed with a quiet that was not silence.", "She counted the doors twice, and both times the number was wrong.", "Somewhere above, a radio played a song nobody had written yet.", "He kept the letter folded in his breast pocket like a second heart.", "By morning the river had changed its mind about which way to run.", "They agreed never to speak of it, which is how it became the only thing they spoke of."][i]} `.repeat(4)).join("\n\n");
