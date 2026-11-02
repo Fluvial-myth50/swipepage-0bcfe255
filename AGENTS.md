@@ -8,3 +8,4 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+- App state (books, events, purchases) lives in an in-memory store in src/lib/store.ts; it is mock data with no backend, so it resets on reload.
