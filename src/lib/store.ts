@@ -1,9 +1,10 @@
 import { useSyncExternalStore } from "react";
 import { splitRevenue } from "./economy";
+import { purchasePrice } from "./poc";
 
 export type Book = {
   id: string; title: string; author: string; genre: string; hook: string;
-  body: string; price: number; deluxePrice: number; hue: number; verified: boolean;
+  body: string; bonus?: boolean; audiobook?: boolean; language?: string; source?: string; price: number; deluxePrice: number; hue: number; verified: boolean;
 };
 export type Event =
   | { type: "dwell"; bookId: string; seconds: number; at: number }
@@ -32,27 +33,39 @@ const seed: Book[] = [
 ];
 seed.forEach((b) => (b.body = b.hook + "\n\n" + b.body));
 
-type State = { books: Book[]; events: Event[]; bookmarks: Record<string, boolean>; owned: Record<string, "standard" | "deluxe"> };
-let state: State = { books: seed, events: [], bookmarks: {}, owned: {} };
+export type DemoUser = { name: string; role: "reader" | "writer" | "admin" };
+export type ImportItem = { id: number; title: string; author: string; language: string; url: string; body: string; status: "Pending Processing" | "Scrambling DRM" | "Live in Feed" };
+type State = { user: DemoUser | null; genres: string[]; premium: boolean; weights: Record<string, number>; transitions: number; selectedBook: string | null; queue: ImportItem[]; books: Book[]; events: Event[]; bookmarks: Record<string, boolean>; owned: Record<string, "standard" | "deluxe"> };
+let state: State = { user: null, genres: [], premium: false, weights: {}, transitions: 0, selectedBook: null, queue: [], books: seed, events: [], bookmarks: {}, owned: {} };
 const listeners = new Set<() => void>();
 const set = (fn: (s: State) => State) => { state = fn(state); listeners.forEach((l) => l()); };
 
 export const useStore = <T,>(sel: (s: State) => T) =>
   useSyncExternalStore((l) => (listeners.add(l), () => listeners.delete(l)), () => sel(state), () => sel(state));
 
+export const getDemoState = () => state;
 export const actions = {
+  login: (user: DemoUser, genres: string[]) => set((s) => ({ ...s, user, genres })),
+  logout: () => set((s) => ({ ...s, user: null, premium: false, genres: [], owned: {}, bookmarks: {}, weights: {}, transitions: 0 })),
+  subscribe: () => set((s) => ({ ...s, premium: true, transitions: 0 })),
+  preferences: (genres: string[]) => set((s) => ({ ...s, genres })),
+  selectBook: (id: string) => set((s) => ({ ...s, selectedBook: id })),
+  weight: (genre: string, points: number) => set((s) => ({ ...s, weights: { ...s.weights, [genre]: (s.weights[genre] ?? 0) + points } })),
+  transition: () => { const n = state.transitions + 1; set((s) => ({ ...s, transitions: n })); return n; },
+  enqueue: (item: ImportItem) => set((s) => ({ ...s, queue: s.queue.some((q) => q.id === item.id) ? s.queue : [...s.queue, item] })),
+  queueStatus: (id: number, status: ImportItem["status"]) => set((s) => ({ ...s, queue: s.queue.map((q) => q.id === id ? { ...q, status } : q) })),
   log: (e: Event) => set((s) => ({ ...s, events: [e, ...s.events] })),
   bookmark: (bookId: string) => {
     set((s) => ({ ...s, bookmarks: { ...s.bookmarks, [bookId]: !s.bookmarks[bookId] } }));
     actions.log({ type: "bookmark", bookId, at: Date.now() });
   },
   purchase: (book: Book, tier: "standard" | "deluxe") => {
-    const price = tier === "deluxe" ? book.deluxePrice : book.price;
+    const price = purchasePrice(tier === "deluxe" ? book.deluxePrice : book.price, state.premium);
     set((s) => ({ ...s, owned: { ...s.owned, [book.id]: tier } }));
     actions.log({ type: "purchase", bookId: book.id, tier, price, ...splitRevenue(price), at: Date.now() });
   },
   publish: (b: Omit<Book, "id">) => {
-    const id = "u" + Date.now();
+    const id = "u" + crypto.randomUUID();
     set((s) => ({ ...s, books: [{ ...b, id }, ...s.books] }));
     actions.log({ type: "publish", bookId: id, at: Date.now() });
     return id;
