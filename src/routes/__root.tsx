@@ -10,6 +10,8 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
+import { useStore } from "@/lib/store";
+import { Onboarding } from "@/components/Onboarding";
 import { AppNav } from "../components/AppNav";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -117,12 +119,14 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const user = useStore((s) => s.user);
 
   return (
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <AppNav />
-      <Outlet />
+      {!user && <div className="fixed inset-0 z-50 overflow-y-auto bg-background"><Onboarding /></div>}
+      <div className={user ? "lg:pl-56" : ""}><Outlet /></div>
     </QueryClientProvider>
   );
 }
