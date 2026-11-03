@@ -92,3 +92,13 @@
 @keyframes scan { 0% { transform: translateY(-100%); } 100% { transform: translateY(400%); } }
 @utility animate-card-in { animation: card-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1); }
 @utility animate-scan { animation: scan 1.6s linear infinite; }
+
+.feed-layout { min-height: 100dvh; }
+.feed-frame { position: relative; height: calc(100dvh - 64px - env(safe-area-inset-bottom)); width: 100%; overflow: hidden; }
+@media (min-width: 1024px) {
+  .feed-layout { max-width: 1220px; margin: auto; padding: 40px; }
+  .feed-frame { height: min(760px, calc(100dvh - 160px)); min-height: 560px; border: 1px solid var(--border); border-radius: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
