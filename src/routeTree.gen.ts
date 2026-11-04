@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AuthorRouteImport } from './routes/author'
+import { Route as PremiumRouteImport } from './routes/premium'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as SearchRouteImport } from './routes/search'
 
@@ -36,6 +37,11 @@ const AuthorRoute = AuthorRouteImport.update({
   path: '/author',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PremiumRoute = PremiumRouteImport.update({
+  id: '/premium',
+  path: '/premium',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -52,6 +58,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/analytics': typeof AnalyticsRoute
   '/author': typeof AuthorRoute
+  '/premium': typeof PremiumRoute
   '/profile': typeof ProfileRoute
   '/search': typeof SearchRoute
 }
@@ -60,6 +67,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/analytics': typeof AnalyticsRoute
   '/author': typeof AuthorRoute
+  '/premium': typeof PremiumRoute
   '/profile': typeof ProfileRoute
   '/search': typeof SearchRoute
 }
@@ -69,20 +77,36 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/analytics': typeof AnalyticsRoute
   '/author': typeof AuthorRoute
+  '/premium': typeof PremiumRoute
   '/profile': typeof ProfileRoute
   '/search': typeof SearchRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/analytics' | '/author' | '/profile' | '/search'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/analytics'
+    | '/author'
+    | '/premium'
+    | '/profile'
+    | '/search'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/analytics' | '/author' | '/profile' | '/search'
+  to:
+    | '/'
+    | '/admin'
+    | '/analytics'
+    | '/author'
+    | '/premium'
+    | '/profile'
+    | '/search'
   id:
     | '__root__'
     | '/'
     | '/admin'
     | '/analytics'
     | '/author'
+    | '/premium'
     | '/profile'
     | '/search'
   fileRoutesById: FileRoutesById
@@ -92,6 +116,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AnalyticsRoute: typeof AnalyticsRoute
   AuthorRoute: typeof AuthorRoute
+  PremiumRoute: typeof PremiumRoute
   ProfileRoute: typeof ProfileRoute
   SearchRoute: typeof SearchRoute
 }
@@ -126,6 +151,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthorRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/premium': {
+      id: '/premium'
+      path: '/premium'
+      fullPath: '/premium'
+      preLoaderRoute: typeof PremiumRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profile': {
       id: '/profile'
       path: '/profile'
@@ -148,6 +180,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   AnalyticsRoute: AnalyticsRoute,
   AuthorRoute: AuthorRoute,
+  PremiumRoute: PremiumRoute,
   ProfileRoute: ProfileRoute,
   SearchRoute: SearchRoute,
 }
