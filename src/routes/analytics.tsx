@@ -2,17 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useStore } from "@/lib/store";
 import { computeReco } from "@/lib/reco";
 import { adEarnings } from "@/lib/economy";
+import { meta } from "@/lib/poc";
 import { useTicker } from "@/hooks/use-ticker";
 
 export const Route = createFileRoute("/analytics")({
-  head: () => ({
-    meta: [
-      { title: "Analytics — SwipePage" },
-      { name: "description", content: "Live log of dwell times, swipes and purchases." },
-      { property: "og:title", content: "Analytics — SwipePage" },
-      { property: "og:description", content: "Live log of dwell times, swipes and purchases." },
-    ],
-  }),
+  head: () => meta("Reading analytics", "Track reading interest, simulated ad impressions and author revenue across SwipePage."),
   component: Analytics,
 });
 
@@ -42,33 +36,33 @@ function Analytics() {
     ["Swipes", events.filter((e) => e.type === "swipe").length],
     ["Avg dwell", `${avg.toFixed(1)}s`],
     ["Purchases", purchases.length],
-    ["Gross", `$${revenue.toFixed(2)}`],
-    ["Author royalties (75%)", `$${royalty.toFixed(2)}`],
-    ["Platform fees (25%)", `$${platform.toFixed(2)}`],
+    ["Gross", `£${revenue.toFixed(2)}`],
+    ["Author royalties (75%) · £", `£${royalty.toFixed(2)}`],
+    ["Platform fees (25%)", `£${platform.toFixed(2)}`],
   ];
 
   const reco = computeReco(books, events);
   const genres = Object.entries(reco.genreAffinity).sort((a, b) => b[1] - a[1]).filter(([, v]) => v > 0);
 
   return (
-    <main className="mx-auto max-w-4xl px-5 pt-24 pb-16">
+    <main className="mx-auto max-w-4xl px-5 py-10 pb-24">
       <h1 className="text-4xl font-bold tracking-tight">Analytics</h1>
       <p className="mt-2 text-muted-foreground">
         Every interaction from the feed, logged live. {reco.signals < 3 ? "The model needs a few more signals before it predicts." : `The model has ${reco.signals} signals to learn from.`}
       </p>
       <div className="mt-8 grid gap-3 sm:grid-cols-2">
-        <div className="rounded-2xl border border-primary/30 bg-card p-5">
+        <div className="rounded-lg border border-primary/30 bg-card p-5">
           <div className="text-xs text-muted-foreground">Total Platform Ad Impressions</div>
           <div className="mt-1 font-mono text-3xl font-bold tabular-nums">{Math.round(tImp).toLocaleString()}</div>
         </div>
-        <div className="rounded-2xl border border-deluxe/30 bg-card p-5">
+        <div className="rounded-lg border border-deluxe/30 bg-card p-5">
           <div className="text-xs text-muted-foreground">Total Platform Gross Ad Revenue · £4.50 CPM</div>
           <div className="mt-1 font-mono text-3xl font-bold tabular-nums text-deluxe">£{tGross.toFixed(6)}</div>
         </div>
       </div>
       <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
         {stats.map(([k, v]) => (
-          <div key={k} className="rounded-2xl border bg-card p-4">
+          <div key={k} className="rounded-lg border bg-card p-4">
             <div className="text-xs text-muted-foreground">{k}</div>
             <div className="mt-1 text-2xl font-bold">{v}</div>
           </div>
@@ -103,7 +97,7 @@ function Analytics() {
       </div>
 
       <h2 className="mt-10 text-sm font-semibold uppercase tracking-widest text-muted-foreground">Event log</h2>
-      <div className="mt-3 overflow-hidden rounded-2xl border">
+      <div className="mt-3 overflow-hidden rounded-lg border">
         {events.length === 0 && <p className="p-6 text-center text-sm text-muted-foreground">No events yet — go swipe some cards.</p>}
         {events.slice(0, 100).map((e, i) => (
           <div key={i} className="flex items-center justify-between border-b px-4 py-2.5 font-mono text-xs last:border-0">

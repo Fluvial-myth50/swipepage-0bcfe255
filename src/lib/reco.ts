@@ -22,7 +22,7 @@ const clamp = (n: number, lo = 0, hi = 1) => Math.min(hi, Math.max(lo, n));
 export function computeReco(books: Book[], events: Event[]): RecoState {
   const dwells = events.filter((e) => e.type === "dwell");
   const globalAvgDwell = dwells.length ? dwells.reduce((a, e) => a + e.seconds, 0) / dwells.length : 0;
-  const signals = events.length;
+  const signals = events.filter((e) => e.type !== "ad" && e.type !== "publish").length;
 
   type Acc = {
     dwellSum: number; dwellCount: number; next: number; prev: number;
@@ -58,7 +58,8 @@ export function computeReco(books: Book[], events: Event[]): RecoState {
 
   const recs: Record<string, Rec> = {};
   for (const b of books) {
-    const a = acc[b.id]!;
+    const a = acc[b.id];
+    if (!a) continue;
     const avgDwell = a.dwellCount ? a.dwellSum / a.dwellCount : 0;
     const ratio = globalAvgDwell ? avgDwell / globalAvgDwell : 0;
     // Neutral 0.5 when the model has no evidence at all; unknown-per-book is

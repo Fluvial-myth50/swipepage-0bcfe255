@@ -8,3 +8,5 @@
 - [ ] Expand author publishing, copyright certification and financial dashboards.
 - [ ] Add demo admin ingestion queue and public-domain import flow.
 - [ ] Verify key flows, financial rules and desktop/mobile layouts.
+- [ ] Replace sample Gutenberg payloads with real topic-based paginated catalogue and lazy text excerpts.
+- [ ] Add live search results grid, profile metrics and dedicated Premium page.
