@@ -16,10 +16,10 @@ export function extractHook(text: string): string {
     (p.match(/\b(never|blood|dark|secret|last|dead|love|run|knew|until)\b/gi)?.length ?? 0) * 2 +
     Math.min(p.split(" ").length, 200) / 20;
   let best = 0;
-  paras.forEach((p, i) => { if (score(p) > score(paras[best]!)) best = i; });
+  paras.forEach((p, i) => { if (score(p) > score(paras[best] ?? "")) best = i; });
   const words: string[] = [];
-  for (let i = best; i < paras.length && words.length < 150; i++) words.push(...paras[i]!.split(" "));
-  for (let i = best - 1; i >= 0 && words.length < 100; i--) words.unshift(...paras[i]!.split(" "));
+  for (let i = best; i < paras.length && words.length < 150; i++) words.push(...(paras[i] ?? "").split(" "));
+  for (let i = best - 1; i >= 0 && words.length < 100; i--) words.unshift(...(paras[i] ?? "").split(" "));
   return words.slice(0, 200).join(" ");
 }
 
@@ -33,4 +33,4 @@ export function adEarnings(seconds: number) {
 export function splitAd(gross: number) {
   return { author: gross * AUTHOR_SHARE, platform: gross * PLATFORM_SHARE };
 }
-export const AD_EVERY = 4;
+
