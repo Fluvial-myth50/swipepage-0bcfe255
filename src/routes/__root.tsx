@@ -11,6 +11,7 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import { useStore } from "@/lib/store";
+import { CatalogueLoader } from "@/components/CatalogueLoader";
 import { Onboarding } from "@/components/Onboarding";
 import { AppNav } from "../components/AppNav";
 import appCss from "../styles.css?url";
@@ -124,6 +125,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+      <CatalogueLoader />
       <AppNav />
       {!user && <div className="fixed inset-0 z-50 overflow-y-auto bg-background"><Onboarding /></div>}
       <div className={user ? "lg:pl-56" : ""}><Outlet /></div>
