@@ -4,7 +4,7 @@ import { purchasePrice } from "./poc";
 
 export type Book = {
   id: string; title: string; author: string; genre: string; hook: string;
-  body: string; bonus?: boolean; audiobook?: boolean; language?: string; source?: string; price: number; deluxePrice: number; hue: number; verified: boolean;
+  body: string; tags?: string[]; bonus?: boolean; audiobook?: boolean; language?: string; source?: string; price: number; deluxePrice: number; hue: number; verified: boolean;
 };
 export type Event =
   | { type: "dwell"; bookId: string; seconds: number; at: number }
@@ -35,8 +35,8 @@ seed.forEach((b) => (b.body = b.hook + "\n\n" + b.body));
 
 export type DemoUser = { name: string; role: "reader" | "writer" | "admin" };
 export type ImportItem = { id: number; title: string; author: string; language: string; url: string; body: string; status: "Pending Processing" | "Scrambling DRM" | "Live in Feed" };
-type State = { user: DemoUser | null; genres: string[]; premium: boolean; weights: Record<string, number>; transitions: number; selectedBook: string | null; queue: ImportItem[]; books: Book[]; events: Event[]; bookmarks: Record<string, boolean>; owned: Record<string, "standard" | "deluxe"> };
-let state: State = { user: null, genres: [], premium: false, weights: {}, transitions: 0, selectedBook: null, queue: [], books: seed, events: [], bookmarks: {}, owned: {} };
+type State = { catalogueStatus: "idle" | "loading" | "ready" | "partial"; catalogueError: string; user: DemoUser | null; genres: string[]; premium: boolean; weights: Record<string, number>; transitions: number; selectedBook: string | null; queue: ImportItem[]; books: Book[]; events: Event[]; bookmarks: Record<string, boolean>; owned: Record<string, "standard" | "deluxe"> };
+let state: State = { catalogueStatus: "idle", catalogueError: "", user: null, genres: [], premium: false, weights: {}, transitions: 0, selectedBook: null, queue: [], books: seed, events: [], bookmarks: {}, owned: {} };
 const listeners = new Set<() => void>();
 const set = (fn: (s: State) => State) => { state = fn(state); listeners.forEach((l) => l()); };
 
@@ -45,6 +45,9 @@ export const useStore = <T,>(sel: (s: State) => T) =>
 
 export const getDemoState = () => state;
 export const actions = {
+  catalogueStatus: (status: State["catalogueStatus"], error: string) => set((s) => ({ ...s, catalogueStatus: status, catalogueError: error })),
+  addBooks: (books: Book[]) => set((s) => { const ids = new Set(s.books.map((b) => b.id)); return { ...s, books: [...s.books, ...books.filter((b) => !ids.has(b.id))] }; }),
+  bookText: (id: string, body: string, hook: string) => set((s) => ({ ...s, books: s.books.map((b) => b.id === id ? { ...b, body, hook } : b) })),
   login: (user: DemoUser, genres: string[]) => set((s) => ({ ...s, user, genres })),
   logout: () => set((s) => ({ ...s, user: null, premium: false, genres: [], owned: {}, bookmarks: {}, weights: {}, transitions: 0 })),
   subscribe: () => set((s) => ({ ...s, premium: true, transitions: 0 })),

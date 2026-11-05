@@ -13,7 +13,7 @@ export function CheckoutModal({ book, onClose }: { book?: Book; onClose: () => v
   const [error, setError] = useState("");
   const price = book ? purchasePrice(tier === "deluxe" ? book.deluxePrice : book.price, premium) : PREMIUM_GBP;
   async function pay() {
-    const [month, year] = expiry.split("/").map(Number);
+    const [month = 0, year = 0] = expiry.split("/").map(Number);
     if (!test || card.replace(/\s/g, "") !== "4242424242424242" || !/^\d{2}\/\d{2}$/.test(expiry) || month < 1 || month > 12 || year < new Date().getFullYear() % 100 || !/^\d{3}$/.test(cvc)) { setError("Use test card 4242 4242 4242 4242, a future MM/YY and any three-digit CVC. No real cards."); return; }
     setError(""); setStatus("processing");
     await new Promise((r) => setTimeout(r, 1200));
