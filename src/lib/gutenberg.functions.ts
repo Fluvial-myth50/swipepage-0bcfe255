@@ -4,11 +4,10 @@ import { TOPICS, stripGutenberg, type CataloguePage } from "./gutenberg";
 const input = z.object({ topic: z.enum(TOPICS).optional(), page: z.number().int().min(1).max(4).default(1), search: z.string().max(100).optional(), id: z.number().int().positive().optional() });
 export const getCatalogue = createServerFn({ method: "GET" }).inputValidator((data: unknown) => input.parse(data)).handler(async ({ data }): Promise<CataloguePage> => {
  const url = new URL("https://gutendex.com/books/");
- url.searchParams.set("languages", "en"); url.searchParams.set("mime_type", "text/plain");
  if (data.topic) url.searchParams.set("topic", data.topic);
  if (data.search) url.searchParams.set("search", data.search);
  if (data.id) url.searchParams.set("ids", String(data.id));
- url.searchParams.set("page", String(data.page));
+ if (data.page > 1) url.searchParams.set("page", String(data.page));
  const response = await fetch(url, { signal: AbortSignal.timeout(25000) });
  if (!response.ok) throw new Error("The public book catalogue is temporarily unavailable. Please retry.");
  return await response.json() as CataloguePage;
