@@ -24,7 +24,7 @@ describe("six Gutenberg shelves", () => {
       expect(book.price).toBe(0);
       expect(isFreeClassic(book)).toBe(true);
     }
-    expect(isFreeClassic({ price: 5, source: undefined })).toBe(false);
+    expect(isFreeClassic({ price: 5 })).toBe(false);
   });
   it("fallback search returns verified titles by ID and author", () => {
     expect(curatedMetadata("", 345)[0]?.title).toBe("Dracula");

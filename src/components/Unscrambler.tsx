@@ -57,7 +57,7 @@ export function Unscrambler({ book, onClose, onBuy, error, onRetry }: { book: Bo
   useEffect(() => { const t = setTimeout(() => setReady(true), 700); return () => clearTimeout(t); }, []);
   const paragraphs = book.body.split(/\n\s*\n/);
   const chapters = Array.from({ length: Math.ceil(paragraphs.length / 2) }, (_, i) => paragraphs.slice(i * 2, i * 2 + 2).join("\n\n"));
-  if (isFreeClassic(book)) return <GutenbergReader book={book} error={error} onRetry={onRetry} onClose={onClose} />;
+  if (isFreeClassic(book)) return <GutenbergReader book={book} {...(error === undefined ? {} : { error })} {...(onRetry === undefined ? {} : { onRetry })} onClose={onClose} />;
   return <section className="absolute inset-0 z-20 flex flex-col bg-paper text-paper-foreground" aria-label="SwipePage Unscrambler">
     <header className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center border-b p-2"><Button variant="ghost" aria-label="Back to feed" onClick={onClose}><ArrowLeft size={18} /></Button><span className="truncate text-center text-xs">{book.title}</span><Button variant="ghost" aria-label="Bookmark" aria-pressed={!!marked} onClick={() => actions.bookmark(book.id)}><Bookmark className={marked ? "text-deluxe" : ""} size={18} /></Button></header>
     <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6" onContextMenu={(e) => e.preventDefault()}>
