@@ -10,7 +10,7 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
-import { useStore } from "@/lib/store";
+import { actions, useStore } from "@/lib/store";
 import { CatalogueLoader } from "@/components/CatalogueLoader";
 import { Onboarding } from "@/components/Onboarding";
 import { AppNav } from "../components/AppNav";
@@ -120,14 +120,16 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const user = useStore((s) => s.user);
+  const user = useStore((s) => s.user), hydrated = useStore((s) => s.hydrated);
+  // Saved progress lives in the browser, so load it after the first render.
+  useEffect(() => { actions.hydrate(); }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <CatalogueLoader />
       <AppNav />
-      {!user && <div className="fixed inset-0 z-50 overflow-y-auto bg-background"><Onboarding /></div>}
+      {hydrated && !user && <div className="fixed inset-0 z-50 overflow-y-auto bg-background"><Onboarding /></div>}
       <div className={user ? "lg:pl-56" : ""}><Outlet /></div>
     </QueryClientProvider>
   );

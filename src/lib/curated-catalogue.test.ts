@@ -12,9 +12,12 @@ describe("six Gutenberg shelves", () => {
     expect(CURATED_BOOKS).toHaveLength(72);
     expect(new Set(CURATED_BOOKS.map((b) => b.id)).size).toBe(72);
   });
-  it("ships real 500-word passages but loads full text only on demand", () => {
+  it("ships real ~500-word passages, without illustration markers, and loads full text only on demand", () => {
     for (const book of CURATED_BOOKS) {
-      expect(book.hook.split(/\s+/)).toHaveLength(500);
+      const words = book.hook.split(/\s+/).length;
+      expect(words).toBeGreaterThan(450);
+      expect(words).toBeLessThanOrEqual(500);
+      expect(book.hook).not.toMatch(/\[Illustration/i);
       expect(book.body).toBe("");
     }
     expect(CURATED_BOOKS.find((b) => b.id === "g1342")?.hook.startsWith("It is a truth universally acknowledged")).toBe(true);

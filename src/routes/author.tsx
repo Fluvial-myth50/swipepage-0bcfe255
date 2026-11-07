@@ -1,10 +1,13 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { actions, useStore } from "@/lib/store";
-import { extractHook, adEarnings, splitAd } from "@/lib/economy";
+import { adEarnings, splitAd } from "@/lib/economy";
+import { bestPassage } from "@/lib/excerpt";
 import { useTicker } from "@/hooks/use-ticker";
 import { Button } from "@/components/ui/button";
 import { canPublish, meta } from "@/lib/poc";
+import { GENRES } from "@/lib/gutenberg";
+import { DemoBadge } from "@/components/BookCover";
 
 export const Route = createFileRoute("/author")({
   head: () => meta("Author Studio", "Publish independent books and review your simulated sales and ad earnings."),
@@ -18,8 +21,9 @@ function Author() {
   const [tab, setTab] = useState<"publish" | "wallet">("publish");
   return (
     <main className="mx-auto max-w-2xl px-5 py-10 pb-24">
-      <p className="text-xs uppercase tracking-[0.2em] text-primary">✓ Verified Author</p>
-      <h1 className="mt-2 text-4xl font-bold tracking-tight">Author Studio</h1>
+      <p className="text-xs uppercase tracking-[0.2em] text-primary">For writers</p>
+      <h1 className="mt-2 text-4xl font-bold tracking-tight">Author Studio<DemoBadge /></h1>
+      <p className="mt-2 text-xs text-muted-foreground">Publishing works for this session. Sales, earnings and payouts are simulated.</p>
       <div className="mt-6 inline-flex rounded-full border bg-muted p-1 text-sm">
         {([["publish", "Publish"], ["wallet", "Earnings & Wallet"]] as const).map(([k, l]) => (
           <Button key={k} onClick={() => setTab(k)} className={`rounded-full px-4 py-1.5 transition ${tab === k ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>{l}</Button>
@@ -80,10 +84,16 @@ function Wallet() {
   );
 }
 
+/** Writers' manuscripts go through the same extractor as the classics. */
+function passageOf(text: string | undefined) {
+  const p = text ? bestPassage(text) : null;
+  return p ? { text: p.text, reasons: p.reasons, position: p.position, isOpening: p.isOpening, from: "full-text" as const } : undefined;
+}
+
 function Publish() {
   const nav = useNavigate();
   const user = useStore((s) => s.user);
-  const [f, setF] = useState({ title: "", author: user?.role === "writer" ? user.name : "", genre: "Thriller", price: "7.99", deluxePrice: "13.99", text: "", excerpt: "", bonus: false, audiobook: false });
+  const [f, setF] = useState({ title: "", author: user?.role === "writer" ? user.name : "", genre: "Thriller" as string, price: "7.99", deluxePrice: "13.99", text: "", excerpt: "", bonus: false, audiobook: false });
   const [step, setStep] = useState(0);
   const [certified, setCertified] = useState(false);
   const [stage, setStage] = useState(-1);
@@ -97,21 +107,22 @@ function Publish() {
     if (!ok) return;
     for (let i = 0; i < steps.length; i++) { setStage(i); await new Promise((r) => setTimeout(r, 750)); }
     const price = parseFloat(f.price) || 4.99;
-    actions.publish({ title: f.title, author: f.author, genre: f.genre, price, deluxePrice: Number(f.deluxePrice), bonus: f.bonus, audiobook: f.audiobook,
-      hook: f.excerpt.trim() || extractHook(f.text), body: f.text, hue: Math.floor(Math.random() * 360), verified: true });
+    const id = actions.publish({ title: f.title, author: f.author, genre: f.genre, price, deluxePrice: Number(f.deluxePrice), bonus: f.bonus, audiobook: f.audiobook,
+      hook: f.excerpt.trim() || f.text.split(/\s+/).slice(0, 500).join(" "), body: f.text, passage: passageOf(f.excerpt.trim() ? undefined : f.text), hue: Math.floor(Math.random() * 360), verified: true });
+    actions.selectBook(id, "Your newly published book");
     nav({ to: "/" });
   };
 
   return (
     <div>
-      <p className="mt-4 text-muted-foreground">Drop a manuscript. We'll find the passage that makes readers stop scrolling. You keep 75%.</p>
+      <p className="mt-4 text-muted-foreground">Drop a manuscript. We'll find the most gripping 150 words in its first tenth to show readers. You keep 75%.</p>
 
       <div className="mt-6 flex gap-2 text-xs">{["Book details", "Manuscript", "Rights & publish"].map((label, i) => <Button variant={step === i ? "primary" : "outline"} key={label} onClick={() => setStep(i)}>{i + 1}. {label}</Button>)}</div>
       {step === 0 && <><div className="mt-8 grid gap-3 sm:grid-cols-2">
         <input className={input} placeholder="Book title" value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} />
         <input className={input} placeholder="Pen name" value={f.author} onChange={(e) => setF({ ...f, author: e.target.value })} />
         <select className={input} value={f.genre} onChange={(e) => setF({ ...f, genre: e.target.value })}>
-          {["Thriller", "Romance", "Fantasy", "Sci‑Fi", "Horror", "Literary", "Mystery"].map((g) => <option key={g}>{g}</option>)}
+          {GENRES.map((g) => <option key={g}>{g}</option>)}
         </select>
         <input className={input} type="number" step="0.01" placeholder="Standard price" value={f.price} onChange={(e) => setF({ ...f, price: e.target.value })} />
       </div>

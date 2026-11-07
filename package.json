@@ -11,7 +11,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "build:passages": "bun scripts/build-passages.ts"
   },
   "overrides": {
     "rolldown": "1.2.1"

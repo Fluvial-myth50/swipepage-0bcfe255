@@ -5,6 +5,7 @@ import { Shield, Download, LoaderCircle } from "lucide-react";
 import { actions, useStore } from "@/lib/store";
 import { getBookText, getCatalogue } from "@/lib/gutenberg.functions";
 import { liveExcerpt } from "@/lib/gutenberg";
+import { bestPassage } from "@/lib/excerpt";
 import { meta } from "@/lib/poc";
 import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/admin")({ head: () => meta("Content ingestion admin", "Review and approve real Gutenberg book imports in the SwipePage demo queue."), component: Admin });
@@ -26,9 +27,11 @@ function Admin() {
  async function approve(id: number) {
   const item = queue.find((q) => q.id === id); if (!item || item.status !== "Pending Processing") return; actions.queueStatus(id, "Scrambling DRM");
   try { const { body } = await text({ data: { id } });
+   const p = bestPassage(body);
+   const passage = p ? { text: p.text, reasons: p.reasons, position: p.position, isOpening: p.isOpening, from: "full-text" as const } : undefined;
    const existing = books.find((b) => b.id === `g${id}`);
    if (existing) actions.bookText(existing.id, body, liveExcerpt(body));
-   else actions.addBooks([{ id: `g${id}`, title: item.title, author: item.author, genre: "Classic Literature", body, hook: liveExcerpt(body), price: 0, deluxePrice: 0, hue: 140, verified: false, source: item.url, language: item.language }]);
+   else actions.addBooks([{ id: `g${id}`, title: item.title, author: item.author, genre: "Classic Literature", body, hook: liveExcerpt(body), ...(passage ? { passage } : {}), price: 0, deluxePrice: 0, hue: 140, verified: false, source: item.url, language: item.language }]);
    actions.queueStatus(id, "Live in Feed");
   } catch { actions.queueStatus(id, "Pending Processing"); setError("The original text could not be retrieved. Retry approval."); }
  }

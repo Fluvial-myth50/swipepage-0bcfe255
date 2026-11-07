@@ -1,10 +1,23 @@
 import catalogue from "./gutenberg-catalogue.json";
-import type { Book } from "./store";
+import type { Book, PassageInfo } from "./store";
+import { bestPassage } from "./excerpt";
 import type { GutenbergBook } from "./gutenberg";
 
-export const CURATED_BOOKS: Book[] = catalogue.map((book) => ({
-  ...book, id: `g${book.id}`, body: "", price: 0, deluxePrice: 0,
-  hue: 140, verified: false, language: "en", tags: [book.genre],
+type Entry = (typeof catalogue)[number] & { passage?: Omit<PassageInfo, "from"> };
+
+/**
+ * Passages are chosen from each book's full text by scripts/build-passages.ts.
+ * Until that has run for a book, the extractor searches the bundled opening instead.
+ */
+function passageFor(book: Entry): PassageInfo | undefined {
+  if (book.passage) return { ...book.passage, from: "full-text" };
+  const p = bestPassage(book.hook);
+  return p ? { text: p.text, reasons: p.reasons, position: p.position, isOpening: p.isOpening, from: "opening" } : undefined;
+}
+
+export const CURATED_BOOKS: Book[] = (catalogue as Entry[]).map((book) => ({
+  ...book, passage: passageFor(book), id: `g${book.id}`, body: "", price: 0, deluxePrice: 0,
+  hue: 140, verified: false, language: "en", tags: book.themes,
   source: `https://www.gutenberg.org/ebooks/${book.id}`,
 }));
 

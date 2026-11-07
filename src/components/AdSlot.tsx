@@ -10,7 +10,7 @@ export function AdSlot({ size, bookId, slot }: Props) {
   return (
     <div className="mx-auto w-full" style={{ maxWidth: rect ? 300 : 728 }}>
       <div className="mb-1 flex items-center justify-between text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
-        <span>Advertisement</span><span className="opacity-60">AdSense · sim</span>
+        <span>Advertisement</span><span className="opacity-60">Demo ad · not a real advert</span>
       </div>
       <div
         className="flex w-full items-center justify-center gap-3 rounded-xl border border-dashed border-foreground/15 bg-muted/40 text-muted-foreground"

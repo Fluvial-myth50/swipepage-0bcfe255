@@ -7,22 +7,6 @@ export function splitRevenue(price: number) {
   return { author, platform };
 }
 
-/** Pulls the most "hooky" 100–200 word passage from a manuscript. */
-export function extractHook(text: string): string {
-  const paras = text.split(/\n\s*\n/).map((p) => p.replace(/\s+/g, " ").trim()).filter(Boolean);
-  if (!paras.length) return "";
-  const score = (p: string) =>
-    (p.match(/[!?—"“”]/g)?.length ?? 0) * 3 +
-    (p.match(/\b(never|blood|dark|secret|last|dead|love|run|knew|until)\b/gi)?.length ?? 0) * 2 +
-    Math.min(p.split(" ").length, 200) / 20;
-  let best = 0;
-  paras.forEach((p, i) => { if (score(p) > score(paras[best] ?? "")) best = i; });
-  const words: string[] = [];
-  for (let i = best; i < paras.length && words.length < 150; i++) words.push(...(paras[i] ?? "").split(" "));
-  for (let i = best - 1; i >= 0 && words.length < 100; i--) words.unshift(...(paras[i] ?? "").split(" "));
-  return words.slice(0, 200).join(" ");
-}
-
 /** Web CPM: £4.50 per 1,000 impressions. */
 export const AD_CPM_GBP = 4.5;
 /** Earnings = (dwell seconds / 1000) * (£4.50 / 60). */

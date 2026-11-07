@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { BookOpen, Search, Feather, UserRound, ChartNoAxesCombined, Shield, Sparkles } from "lucide-react";
+import { BookOpen, Search, Feather, UserRound, ChartNoAxesCombined, Shield, Sparkles, Lightbulb } from "lucide-react";
 import { useStore } from "@/lib/store";
 const items = [{ to: "/", label: "Feed", icon: BookOpen }, { to: "/search", label: "Search", icon: Search }, { to: "/author", label: "Author Studio", icon: Feather }, { to: "/profile", label: "Profile", icon: UserRound }] as const;
 export function AppNav() {
@@ -10,6 +10,7 @@ export function AppNav() {
     <p className="mb-3 text-[10px] uppercase tracking-widest text-muted-foreground">Your bookshelf, reimagined</p>
     <nav className="space-y-2">{items.map((i) => <Link key={i.to} to={i.to} activeOptions={{ exact: true }} className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-muted-foreground hover:bg-muted" activeProps={{ className: "bg-primary/10 text-primary" }}><i.icon size={18} />{i.label}</Link>)}
       <Link to="/analytics" className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-muted-foreground" activeProps={{ className: "bg-primary/10 text-primary" }}><ChartNoAxesCombined size={18} />Analytics</Link>
+      <Link to="/how-it-works" className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-muted-foreground" activeProps={{ className: "bg-primary/10 text-primary" }}><Lightbulb size={18} />How it works</Link>
       {user.role === "admin" && <Link to="/admin" className="flex items-center gap-3 p-3 text-sm"><Shield size={18} />Admin</Link>}
     </nav>
     <Link to="/profile" className="mt-auto border-t pt-6"><div className="flex items-center gap-2 text-deluxe"><Sparkles size={16} />{premium ? "Premium member" : "Go Premium"}</div><p className="mt-4 truncate text-sm">{user.name}</p><p className="text-xs capitalize text-muted-foreground">{user.role} · demo session</p></Link>
