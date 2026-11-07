@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from "react";
 import { splitRevenue } from "./economy";
 import { purchasePrice } from "./poc";
+import { CURATED_BOOKS } from "./curated-catalogue";
 
 export type Book = {
   id: string; title: string; author: string; genre: string; hook: string;
@@ -36,7 +37,7 @@ seed.forEach((b) => (b.body = b.hook + "\n\n" + b.body));
 export type DemoUser = { name: string; role: "reader" | "writer" | "admin" };
 export type ImportItem = { id: number; title: string; author: string; language: string; url: string; body: string; status: "Pending Processing" | "Scrambling DRM" | "Live in Feed" };
 type State = { catalogueStatus: "idle" | "loading" | "ready" | "partial"; catalogueError: string; user: DemoUser | null; genres: string[]; premium: boolean; weights: Record<string, number>; transitions: number; selectedBook: string | null; queue: ImportItem[]; books: Book[]; events: Event[]; bookmarks: Record<string, boolean>; owned: Record<string, "standard" | "deluxe"> };
-let state: State = { catalogueStatus: "idle", catalogueError: "", user: null, genres: [], premium: false, weights: {}, transitions: 0, selectedBook: null, queue: [], books: seed, events: [], bookmarks: {}, owned: {} };
+let state: State = { catalogueStatus: "ready", catalogueError: "", user: null, genres: [], premium: false, weights: {}, transitions: 0, selectedBook: null, queue: [], books: [...CURATED_BOOKS, ...seed], events: [], bookmarks: {}, owned: {} };
 const listeners = new Set<() => void>();
 const set = (fn: (s: State) => State) => { state = fn(state); listeners.forEach((l) => l()); };
 

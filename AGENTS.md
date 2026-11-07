@@ -12,5 +12,6 @@
 
 - Keep demo personas, entitlements, learning weights, catalogue metadata and transactions in the reactive in-memory store; simulated session state must not be represented as real authentication or persistent billing.
 - Retrieve public Gutendex metadata and Gutenberg text through bounded TanStack server functions; browser CORS prevents direct text access, and callers may never supply arbitrary upstream URLs.
-- Load catalogue metadata on hydration and fetch/cache text only for opened titles; bounded topic pagination and ID deduplication keep memory and upstream requests controlled.
+- Bundle a verified six-genre Gutenberg catalogue with authentic excerpts; retrieve/cache full text only when opened, and reserve bounded Gutendex requests for optional imports so upstream outages cannot empty the shelf.
+- Render free Gutenberg editions as paginated plain text with no purchase gate; retain the canvas preview only for simulated independent-book protection so long classics stay readable and accessible.
 - Render protected reading through the canvas Unscrambler as a demonstration only; never claim it prevents screenshots, scraping or piracy.
