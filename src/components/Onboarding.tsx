@@ -4,7 +4,8 @@ import { BookOpen, Feather, ArrowRight, Check } from "lucide-react";
 import { actions } from "@/lib/store";
 import { Button } from "./ui/button";
 import island from "@/assets/salt-island.jpg";
-export const GENRES = ["Literary Fantasy", "Sci-Fi", "Thriller", "Romance", "Horror", "Mystery"];
+export { GENRES } from "@/lib/gutenberg";
+import { GENRES } from "@/lib/gutenberg";
 export function Onboarding() {
   const nav = useNavigate();
   const [mode, setMode] = useState("login");

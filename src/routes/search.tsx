@@ -4,6 +4,7 @@ import { Search, ArrowRight, BookOpen } from "lucide-react";
 import { actions, useStore } from "@/lib/store";
 import { meta } from "@/lib/poc";
 import { Button } from "@/components/ui/button";
+import { GENRES } from "@/lib/gutenberg";
 export const Route = createFileRoute("/search")({ head: () => meta("Search the shelf", "Search real Gutenberg classics and independent books by title, author or genre."), component: SearchPage });
 function SearchPage() {
  const books = useStore((s) => s.books), status = useStore((s) => s.catalogueStatus), error = useStore((s) => s.catalogueError), [query, setQuery] = useState(""), [genre, setGenre] = useState("All"); const nav = useNavigate();
