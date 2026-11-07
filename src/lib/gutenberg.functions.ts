@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { TOPICS, stripGutenberg, type CataloguePage } from "./gutenberg";
+import { curatedMetadata } from "./curated-catalogue";
 const input = z.object({ topic: z.enum(TOPICS).optional(), page: z.number().int().min(1).max(4).default(1), search: z.string().max(100).optional(), id: z.number().int().positive().optional() });
 export const getCatalogue = createServerFn({ method: "GET" }).inputValidator((data: unknown) => input.parse(data)).handler(async ({ data }): Promise<CataloguePage> => {
  const url = new URL("https://gutendex.com/books/");
@@ -8,9 +9,14 @@ export const getCatalogue = createServerFn({ method: "GET" }).inputValidator((da
  if (data.search) url.searchParams.set("search", data.search);
  if (data.id) url.searchParams.set("ids", String(data.id));
  if (data.page > 1) url.searchParams.set("page", String(data.page));
- const response = await fetch(url, { signal: AbortSignal.timeout(25000) });
- if (!response.ok) throw new Error("The public book catalogue is temporarily unavailable. Please retry.");
- return await response.json() as CataloguePage;
+ try {
+  const response = await fetch(url, { signal: AbortSignal.timeout(12000) });
+  if (!response.ok) throw new Error("Catalogue unavailable");
+  return await response.json() as CataloguePage;
+ } catch {
+  const results = data.page === 1 ? curatedMetadata(data.search, data.id).filter((b) => !data.topic || b.subjects.some((s) => s.toLowerCase().replace("literary ", "").replace("sci-fi", "science-fiction") === data.topic)) : [];
+  return { results, count: results.length, next: null };
+ }
 });
 export const getBookText = createServerFn({ method: "GET" }).inputValidator((data: unknown) => z.object({ id: z.number().int().min(1).max(100000) }).parse(data)).handler(async ({ data }) => {
  // Caller supplies only a numeric Gutenberg ID: never proxy arbitrary URLs.

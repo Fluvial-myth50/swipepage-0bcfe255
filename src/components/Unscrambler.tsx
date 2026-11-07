@@ -3,6 +3,28 @@ import { ArrowLeft, Bookmark, LoaderCircle, LockKeyhole } from "lucide-react";
 import { actions, useStore, type Book } from "@/lib/store";
 import { AdSlot } from "./AdSlot";
 import { Button } from "./ui/button";
+import { isFreeClassic, readingPages } from "@/lib/curated-catalogue";
+import { useMemo } from "react";
+
+function GutenbergReader({ book, error, onRetry, onClose }: { book: Book; error?: string; onRetry?: () => void; onClose: () => void }) {
+  const [page, setPage] = useState(0);
+  const pages = useMemo(() => readingPages(book.body), [book.body]);
+  const scroller = useRef<HTMLDivElement>(null);
+  const premium = useStore((s) => s.premium);
+  function turn(next: number) { setPage(next); scroller.current?.scrollTo({ top: 0 }); }
+  return <section className="absolute inset-0 z-20 flex flex-col bg-paper text-paper-foreground" aria-label="Gutenberg reader">
+    <header className="flex items-center gap-3 border-b p-2"><Button variant="ghost" aria-label="Back to feed" onClick={onClose}><ArrowLeft size={18} /></Button><span className="min-w-0 flex-1 truncate text-xs">{book.title}</span><a href={book.source} target="_blank" rel="noreferrer" className="shrink-0 text-xs text-primary">Source ↗</a></header>
+    <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
+      <h1 className="break-words font-serif text-3xl">{book.title}</h1><p className="mt-2 text-sm text-muted-foreground">{book.author}</p>
+      {!book.body ? error ? <div role="alert" className="mt-8"><p className="text-sm text-destructive">{error}</p><Button variant="outline" className="mt-4" onClick={onRetry}>Retry text</Button></div> : <p role="status" className="mt-8 flex items-center gap-2 text-sm"><LoaderCircle className="animate-spin" size={18} />Loading full Gutenberg text…</p> : <>
+        {page > 0 && !premium && <div className="mt-6"><AdSlot size="leaderboard" bookId={book.id} slot="reader" /></div>}
+        <div className="mt-8 whitespace-pre-wrap break-words font-serif text-lg leading-relaxed" aria-label="Book text">{pages[page]}</div>
+        {page === pages.length - 1 && <p className="mt-8 border-t pt-4 text-center text-sm text-muted-foreground">End of book</p>}
+      </>}
+    </div>
+    <footer className="flex shrink-0 items-center justify-between gap-2 border-t p-3"><Button variant="outline" aria-label="Previous reading page" disabled={!book.body || page === 0} onClick={() => turn(page - 1)}>Previous</Button><span className="text-xs text-muted-foreground">{pages.length ? `${page + 1} / ${pages.length}` : "Free edition"}</span><Button variant="outline" aria-label="Next reading page" disabled={!book.body || page >= pages.length - 1} onClick={() => turn(page + 1)}>Next</Button></footer>
+  </section>;
+}
 function CanvasChapter({ text }: { text: string }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
@@ -29,12 +51,13 @@ function CanvasChapter({ text }: { text: string }) {
   }, [text]);
   return <canvas ref={canvas} className="block max-w-full text-paper-foreground" aria-label="Protected chapter canvas" />;
 }
-export function Unscrambler({ book, onClose, onBuy }: { book: Book; onClose: () => void; onBuy: () => void }) {
+export function Unscrambler({ book, onClose, onBuy, error, onRetry }: { book: Book; onClose: () => void; onBuy: () => void; error?: string; onRetry?: () => void }) {
   const owned = useStore((s) => s.owned[book.id]), marked = useStore((s) => s.bookmarks[book.id]), premium = useStore((s) => s.premium);
   const [ready, setReady] = useState(false);
   useEffect(() => { const t = setTimeout(() => setReady(true), 700); return () => clearTimeout(t); }, []);
   const paragraphs = book.body.split(/\n\s*\n/);
   const chapters = Array.from({ length: Math.ceil(paragraphs.length / 2) }, (_, i) => paragraphs.slice(i * 2, i * 2 + 2).join("\n\n"));
+  if (isFreeClassic(book)) return <GutenbergReader book={book} {...(error === undefined ? {} : { error })} {...(onRetry === undefined ? {} : { onRetry })} onClose={onClose} />;
   return <section className="absolute inset-0 z-20 flex flex-col bg-paper text-paper-foreground" aria-label="SwipePage Unscrambler">
     <header className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center border-b p-2"><Button variant="ghost" aria-label="Back to feed" onClick={onClose}><ArrowLeft size={18} /></Button><span className="truncate text-center text-xs">{book.title}</span><Button variant="ghost" aria-label="Bookmark" aria-pressed={!!marked} onClick={() => actions.bookmark(book.id)}><Bookmark className={marked ? "text-deluxe" : ""} size={18} /></Button></header>
     <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6" onContextMenu={(e) => e.preventDefault()}>

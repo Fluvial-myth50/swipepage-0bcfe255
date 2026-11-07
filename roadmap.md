@@ -1,4 +1,5 @@
 # SwipePage roadmap
+- [ ] Supply 12 verified Gutenberg titles per genre with bundled genuine excerpts, six-genre search and on-demand full reading.
 - [ ] Refactor desktop sidebar/split-pane and mobile full-height feed/bottom navigation.
 - [ ] Add simulated reader/writer onboarding and genre preferences.
 - [ ] Finish live dwell revenue tracking and personalized feed ordering.
